@@ -49,3 +49,8 @@ security:
   pii:
     key: your-pii-key
     hash-salt: your-hash-salt
+
+app:
+  auth:
+    email-verification-base-url: "http://localhost:8080/api/auth/email-verification"
+    email-verification-ttl-hours: 24

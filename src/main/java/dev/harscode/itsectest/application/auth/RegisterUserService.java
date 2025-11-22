@@ -1,14 +1,17 @@
 package dev.harscode.itsectest.application.auth;
 
+import dev.harscode.itsectest.config.AuthProperties;
+import dev.harscode.itsectest.domain.auth.UserToken;
 import dev.harscode.itsectest.domain.user.User;
 import dev.harscode.itsectest.domain.user.UserProfile;
-import dev.harscode.itsectest.ports.PasswordHasher;
-import dev.harscode.itsectest.ports.UserProfileRepository;
-import dev.harscode.itsectest.ports.UserRepository;
+import dev.harscode.itsectest.ports.*;
+import dev.harscode.itsectest.security.token.TokenHashService;
+import dev.harscode.itsectest.security.token.VerificationTokenGenerator;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class RegisterUserService implements RegisterUserUsecase {
@@ -16,13 +19,28 @@ public class RegisterUserService implements RegisterUserUsecase {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final PasswordHasher passwordHasher;
+    private final UserTokenRepository userTokenRepository;
+    private final VerificationTokenGenerator tokenGenerator;
+    private final TokenHashService tokenHashService;
+    private final MailSenderPort mailSender;
+    private final AuthProperties authProperties;
 
     public RegisterUserService(UserRepository userRepository,
                                UserProfileRepository userProfileRepository,
-                               PasswordHasher passwordHasher) {
+                               PasswordHasher passwordHasher,
+                               UserTokenRepository userTokenRepository,
+                               VerificationTokenGenerator tokenGenerator,
+                               TokenHashService tokenHashService,
+                               MailSenderPort mailSender,
+                               AuthProperties authProperties) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.passwordHasher = passwordHasher;
+        this.userTokenRepository = userTokenRepository;
+        this.tokenGenerator = tokenGenerator;
+        this.tokenHashService = tokenHashService;
+        this.mailSender = mailSender;
+        this.authProperties = authProperties;
     }
 
     @Override
@@ -38,6 +56,7 @@ public class RegisterUserService implements RegisterUserUsecase {
             throw new IllegalArgumentException("Email already registered");
         }
 
+        // Create user
         String passwordHash = passwordHasher.hash(cmd.password());
         Instant now = Instant.now();
 
@@ -48,12 +67,13 @@ public class RegisterUserService implements RegisterUserUsecase {
         user.setStatus("inactive");
         user.setRole("viewer");
         user.setEmailVerified(false);
-        user.setMfaEnabled(false);
+        user.setMfaEnabled(true);
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
 
         User savedUser = userRepository.save(user);
 
+        // Create profile
         UserProfile profile = new UserProfile();
         profile.setUserId(savedUser.getId());
         profile.setFullName(cmd.name().trim());
@@ -61,6 +81,27 @@ public class RegisterUserService implements RegisterUserUsecase {
         profile.setUpdatedAt(now);
 
         userProfileRepository.save(profile);
+
+        // Generate verification token
+        String plainToken = tokenGenerator.generateRandomToken();
+        String hash = tokenHashService.hash(plainToken);
+
+        Instant expiresAt = Instant.now().plus(authProperties.getEmailVerificationTtlHours(), ChronoUnit.HOURS);
+
+        UserToken token = new UserToken();
+        token.setUserId(savedUser.getId());
+        token.setTokenHash(hash);
+        token.setTokenType("email-verification");
+        token.setExpiresAt(expiresAt);
+        token.setCreatedAt(now);
+        token.setUpdatedAt(now);
+
+        userTokenRepository.create(token);
+
+        // Send Email
+        String verificationUrl = authProperties.getEmailVerificationBaseUrl();
+        String link = verificationUrl + "?token=" + token.getTokenHash();
+        mailSender.sendEmailVerification(user.getEmail(), link);
 
         return new RegisterUserResult(
                 savedUser.getId(),
