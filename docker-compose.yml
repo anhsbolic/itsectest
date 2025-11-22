@@ -11,7 +11,6 @@ services:
 #    depends_on:
 #      - db
 #      - redis
-#      - mailhog
 #    networks:
 #      - itsectest-net
 
@@ -19,15 +18,15 @@ services:
     image: postgres:16-alpine
     container_name: itsectest-db
     environment:
-      POSTGRES_DB: ${DB_NAME:-itsectest}
-      POSTGRES_USER: ${DB_USERNAME:-itsectest}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-itsectest}
+      POSTGRES_DB: ${DB_NAME:-itsectest_library}
+      POSTGRES_USER: ${DB_USERNAME:-itsectest_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-itsectest_password}
     ports:
       - "5433:5432"
-    volumes:
-      - itsectest_pgdata:/var/lib/postgresql/data
     networks:
       - itsectest-net
+    volumes:
+      - itsectest_pgdata:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
