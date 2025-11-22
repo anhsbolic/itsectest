@@ -24,3 +24,7 @@ security:
     secret: ${JWT_SECRET}
     access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES}
     refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS}
+
+  pii:
+    key: ${ENCRYPTION_KEY}
+    hash-salt: ${HASH_SALT}

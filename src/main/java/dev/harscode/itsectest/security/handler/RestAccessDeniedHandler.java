@@ -1,7 +1,7 @@
 package dev.harscode.itsectest.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.harscode.itsectest.web.dto.http.ErrorResponse;
+import dev.harscode.itsectest.web.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;

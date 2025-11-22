@@ -32,6 +32,11 @@ spring:
       host: localhost
       port: 6379
 
+#logging:
+#  level:
+#    root: DEBUG
+#    org.springframework: DEBUG
+
 server:
   port: 8080
 
@@ -40,3 +45,7 @@ security:
     secret: your-secret
     access-token-ttl-minutes: your-ttl-access
     refresh-token-ttl-days: your-ttl-refresh
+
+  pii:
+    key: your-pii-key
+    hash-salt: your-hash-salt

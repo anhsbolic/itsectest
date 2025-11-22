@@ -1,16 +1,21 @@
 package dev.harscode.itsectest.web;
 
-import dev.harscode.itsectest.web.dto.http.ErrorResponse;
+import dev.harscode.itsectest.web.dto.ErrorResponse;
 import dev.harscode.itsectest.web.exception.TooManyRequestsException;
 import dev.harscode.itsectest.web.exception.UnsupportedMediaTypeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex) {
@@ -32,7 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
-        // TODO: log error detail
+        log.error("Unhandled exception:", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("error", "INTERNAL_ERROR", "Unexpected error", null));
     }

@@ -36,14 +36,18 @@ spring:
 server:
   port: ${APP_PORT}
 
-logging:
-  level:
-    root: INFO
-    org.springframework: INFO
-    dev.harscode.itsectest: DEBUG
+#logging:
+#  level:
+#    root: INFO
+#    org.springframework: INFO
+#    dev.harscode.itsectest: DEBUG
 
 security:
   jwt:
     secret: ${JWT_SECRET:dev-secret}
     access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:30}
     refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS:7}
+
+  pii:
+    key: ${ENCRYPTION_KEY:dev-encryption-key}
+    hash-salt: ${HASH_SALT:dev-hash-salt}

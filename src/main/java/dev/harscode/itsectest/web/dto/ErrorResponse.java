@@ -1,4 +1,4 @@
-package dev.harscode.itsectest.web.dto.http;
+package dev.harscode.itsectest.web.dto;
 
 public record ErrorResponse(
         String status,

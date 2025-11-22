@@ -1,4 +1,4 @@
-package dev.harscode.itsectest.web.dto.sort;
+package dev.harscode.itsectest.adapters.web.sort;
 
 import java.util.List;
 
