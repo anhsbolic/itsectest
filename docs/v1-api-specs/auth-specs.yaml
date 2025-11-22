@@ -1,0 +1,469 @@
+openapi: 3.0.3
+info:
+  title: ITSEC Backend Technical Test - Auth API
+  version: 1.0.0
+  description: |
+    Authentication & user lifecycle endpoints for the ITSEC Technical Test.
+    - Access token: JWT (15 minutes, sent via Authorization header)
+    - Refresh token: opaque string (7 days, HttpOnly cookie: `refresh_token`)
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Auth
+    description: Authentication and account lifecycle
+
+paths:
+  /auth/register:
+    post:
+      tags: [ Auth ]
+      summary: Register new user
+      description: Register new user with email, username, password and full name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email or username already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/email-verification:
+    get:
+      tags: [ Auth ]
+      summary: Verify email by token
+      description: Verify user email using token sent via email.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Email verification token.
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailVerificationResponse'
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [ Auth ]
+      summary: Login with email/username and password
+      description: |
+        Authenticate user and create a session.
+        - Returns access token (JWT) in response body
+        - Sets HttpOnly cookie `refresh_token` with opaque refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh token cookie (`refresh_token`)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Email not verified or account not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '423':
+          description: Account locked due to too many failed attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [ Auth ]
+      summary: Refresh access token
+      description: |
+        Issue new access token using refresh token from HttpOnly cookie `refresh_token`.
+        No request body needed.
+      requestBody:
+        required: false
+      responses:
+        '200':
+          description: Access token refreshed
+          headers:
+            Set-Cookie:
+              description: New HttpOnly refresh token cookie (`refresh_token`) if rotation is enabled.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefreshResponse'
+        '401':
+          description: Missing or invalid refresh token cookie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Session revoked or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags: [ Auth ]
+      summary: Get current authenticated user
+      description: Get user profile using access token (JWT).
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags: [ Auth ]
+      summary: Logout current session
+      description: |
+        Logout current session:
+        - Revoke server-side session
+        - Clear `refresh_token` cookie
+        - Optionally blacklist current access token until it expires.
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: false
+      responses:
+        '200':
+          description: Logout successful
+          headers:
+            Set-Cookie:
+              description: Clears `refresh_token` cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/forgot-password:
+    post:
+      tags: [ Auth ]
+      summary: Request password reset
+      description: |
+        Request password reset link to be sent to the given email.
+        Always returns success message to avoid user enumeration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Password reset link requested (if email exists)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/reset-password:
+    post:
+      tags: [ Auth ]
+      summary: Reset password using token
+      description: Reset password using reset token sent via email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid token or weak password / validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common wrappers
+    MessageResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Operation completed successfully
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        code:
+          type: string
+          description: Machine-readable error code
+          example: INVALID_CREDENTIALS
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid email or password
+        details:
+          type: object
+          nullable: true
+          description: Optional extra error details (e.g. field validation errors)
+
+    # User-related
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        fullName:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        role:
+          type: string
+          example: viewer
+          description: One of super_admin, editor, contributor, viewer
+        status:
+          type: string
+          example: active
+        isEmailVerified:
+          type: boolean
+        mfaEnabled:
+          type: boolean
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # Requests
+    RegisterRequest:
+      type: object
+      required: [ email, username, password, fullName ]
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          minLength: 8
+          description: Strong password (uppercase, lowercase, digit, symbol recommended)
+        fullName:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    LoginRequest:
+      type: object
+      required: [ emailOrUsername, password ]
+      properties:
+        emailOrUsername:
+          type: string
+        password:
+          type: string
+        rememberMe:
+          type: boolean
+          default: true
+
+    ForgotPasswordRequest:
+      type: object
+      required: [ email ]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required: [ token, newPassword ]
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+
+    # Responses
+    RegisterResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: '#/components/schemas/AuthUser'
+
+    EmailVerificationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Email verified successfully
+            userId:
+              type: string
+              format: uuid
+
+    LoginResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              description: JWT access token
+            tokenType:
+              type: string
+              example: Bearer
+            expiresIn:
+              type: integer
+              example: 900
+              description: Access token lifetime in seconds
+            user:
+              $ref: '#/components/schemas/AuthUser'
+
+    TokenRefreshResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            tokenType:
+              type: string
+              example: Bearer
+            expiresIn:
+              type: integer
+              example: 900
+
+    MeResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: '#/components/schemas/AuthUser'
