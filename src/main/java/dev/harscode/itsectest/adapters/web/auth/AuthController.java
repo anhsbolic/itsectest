@@ -1,24 +1,26 @@
 package dev.harscode.itsectest.adapters.web.auth;
 
-import dev.harscode.itsectest.application.auth.RegisterUserCommand;
-import dev.harscode.itsectest.application.auth.RegisterUserResult;
-import dev.harscode.itsectest.application.auth.RegisterUserUsecase;
+import dev.harscode.itsectest.application.auth.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final RegisterUserUsecase registerUserUsecase;
+    private final EmailVerificationUsecase emailVerificationUsecase;
 
-    public AuthController(RegisterUserUsecase registerUserUsecase) {
+    public AuthController(
+            RegisterUserUsecase registerUserUsecase,
+            EmailVerificationUsecase emailVerificationUsecase
+    ) {
         this.registerUserUsecase = registerUserUsecase;
+        this.emailVerificationUsecase = emailVerificationUsecase;
     }
 
     @PostMapping("/register")
@@ -41,5 +43,11 @@ public class AuthController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/email-verification")
+    public ResponseEntity<?> verifyEmailFromLink(@RequestParam("token") String token) {
+        emailVerificationUsecase.verify(token);
+        return ResponseEntity.ok(Map.of("message", "Email verified"));
     }
 }

@@ -46,6 +46,17 @@ public class UserRepositoryJpaAdapter implements UserRepository {
         return jpaRepository.findById(id).map(this::toDomain);
     }
 
+    @Override
+    public void markEmailVerifiedAndActivate(UUID userId) {
+        jpaRepository.findById(userId).ifPresent(entity -> {
+            entity.setEmailVerified(true);
+            if ("inactive".equalsIgnoreCase(entity.getStatus())) {
+                entity.setStatus("active");
+            }
+            jpaRepository.save(entity);
+        });
+    }
+
     private UserEntity toEntity(User user) {
         UserEntity e = new UserEntity();
         e.setId(user.getId());
