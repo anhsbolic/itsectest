@@ -7,6 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 @Component
 public class AuditLogRepositoryJpaAdapter implements AuditLogRepository {
 
@@ -44,5 +48,40 @@ public class AuditLogRepositoryJpaAdapter implements AuditLogRepository {
         } catch (Exception ex) {
             log.warn("Failed to save audit log: {}", ex.getMessage());
         }
+    }
+
+    @Override
+    public List<AuditLog> findAll() {
+        return jpa.findAllByDeletedAtIsNull()
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Optional<AuditLog> findById(UUID id) {
+        return jpa.findById(id)
+                .filter(e -> e.getDeletedAt() == null)
+                .map(this::toDomain);
+    }
+
+    private AuditLog toDomain(AuditLogEntity e) {
+        AuditLog d = new AuditLog();
+        d.setId(e.getId());
+        d.setUserId(e.getUserId());
+        d.setActivity(e.getActivity());
+        d.setEntityType(e.getEntityType());
+        d.setEntityId(e.getEntityId());
+        d.setSuccess(e.isSuccess());
+        d.setIpAddress(piiCrypto.decrypt(e.getIpAddressEnc()));
+        d.setIpAddressHash(e.getIpAddressHash());
+        d.setUserAgent(piiCrypto.decrypt(e.getUserAgentEnc()));
+        d.setUserAgentHash(e.getUserAgentHash());
+        d.setActivityTime(e.getActivityTime());
+        d.setDescription(e.getDescription());
+        d.setCreatedAt(e.getCreatedAt());
+        d.setUpdatedAt(e.getUpdatedAt());
+        d.setDeletedAt(e.getDeletedAt());
+        return d;
     }
 }
