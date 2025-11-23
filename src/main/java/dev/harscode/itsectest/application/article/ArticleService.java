@@ -25,6 +25,7 @@ public class ArticleService implements ArticleUsecase {
         a.setTitle(cmd.title().trim());
         a.setContent(cmd.content().trim());
         a.setAuthorId(cmd.authorId());
+        a.setStatus("published");
         a.setCreatedAt(Instant.now());
         a.setUpdatedAt(Instant.now());
 
@@ -65,20 +66,20 @@ public class ArticleService implements ArticleUsecase {
 
     @Override
     public PagedArticleResult list(ListArticlesQuery query) {
-        int page = Math.max(query.page(), 0);
+        int requestedPage = query.page() <= 0 ? 1 : query.page();
+        int pageIndex = requestedPage - 1;
         int size = query.size() <= 0 ? 10 : Math.min(query.size(), 100);
 
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<Article> pageResult = repo.findAll(
-                query.search() == null ? "" : query.search().trim(),
-                query.authorId(),
-                query.status() == null ? "" : query.status().trim(),
-                pageable
-        );
+        String search = (query.search() == null || query.search().isBlank()) ? null : query.search().trim();
+        UUID authorId = query.authorId();
+        String status = (query.status() == null || query.status().isBlank()) ? null : query.status().trim();
+
+        PageRequest pageable = PageRequest.of(pageIndex, size);
+        Page<Article> pageResult = repo.findAll(search, authorId, status, pageable);
 
         return new PagedArticleResult(
                 pageResult.map(this::toResult).getContent(),
-                page,
+                requestedPage,
                 size,
                 pageResult.getTotalElements(),
                 pageResult.getTotalPages()

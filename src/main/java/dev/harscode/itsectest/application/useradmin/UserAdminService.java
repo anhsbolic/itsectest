@@ -79,7 +79,7 @@ public class UserAdminService implements UserAdminUsecase {
         user.setRole(cmd.role());
         user.setStatus("active");
         user.setEmailVerified(true);
-        user.setMfaEnabled(false);
+        user.setMfaEnabled(true);
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
 

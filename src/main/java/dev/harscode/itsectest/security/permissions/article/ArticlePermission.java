@@ -1,14 +1,15 @@
 package dev.harscode.itsectest.security.permissions.article;
 
-import dev.harscode.itsectest.domain.user.AuthUser;
 import dev.harscode.itsectest.web.exception.ForbiddenException;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class ArticlePermission {
 
-    public ArticleScope resolveScope(AuthUser user, ArticleAction action) {
-        return switch (user.getRole()) {
+    public ArticleScope resolveScope(UUID userId, String userRole, ArticleAction action) {
+        return switch (userRole) {
             case "super_admin" -> ArticleScope.ALL;
 
             case "editor" -> switch (action) {

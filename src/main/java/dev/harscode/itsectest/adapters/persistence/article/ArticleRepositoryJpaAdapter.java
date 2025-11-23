@@ -56,6 +56,7 @@ public class ArticleRepositoryJpaAdapter implements ArticleRepository {
         e.setId(a.getId());
         e.setTitle(a.getTitle());
         e.setContent(a.getContent());
+        e.setStatus(a.getStatus());
         e.setAuthorId(a.getAuthorId());
         e.setCreatedAt(a.getCreatedAt());
         e.setUpdatedAt(a.getUpdatedAt());
