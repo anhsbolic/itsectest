@@ -1,8 +1,8 @@
 package dev.harscode.itsectest.adapters.persistence.user;
 
 import dev.harscode.itsectest.domain.user.User;
-import dev.harscode.itsectest.ports.PiiCrypto;
-import dev.harscode.itsectest.ports.UserRepository;
+import dev.harscode.itsectest.ports.crypt.PiiCrypto;
+import dev.harscode.itsectest.ports.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

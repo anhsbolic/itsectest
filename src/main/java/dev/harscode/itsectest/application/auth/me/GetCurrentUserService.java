@@ -2,8 +2,8 @@ package dev.harscode.itsectest.application.auth.me;
 
 import dev.harscode.itsectest.domain.user.User;
 import dev.harscode.itsectest.domain.user.UserProfile;
-import dev.harscode.itsectest.ports.UserProfileRepository;
-import dev.harscode.itsectest.ports.UserRepository;
+import dev.harscode.itsectest.ports.repository.UserProfileRepository;
+import dev.harscode.itsectest.ports.repository.UserRepository;
 import dev.harscode.itsectest.web.exception.UnauthorizedException;
 import org.springframework.stereotype.Service;
 

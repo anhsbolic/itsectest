@@ -91,7 +91,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
+    public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequest body,
             HttpServletRequest request
     ) {
@@ -107,6 +107,15 @@ public class AuthController {
 
         LoginUserResult result = loginUserUsecase.login(cmd);
 
+        if (result.mfaRequired()) {
+            var resBody = ApiResponse.ok(
+                    "MFA required, OTP has been sent to your email",
+                    Map.of("mfaRequired", true, "mfaSessionId", result.mfaSessionId())
+            );
+            return ResponseEntity.ok().body(resBody);
+        }
+
+        // === Normal login response ===
         AuthUser authUser = new AuthUser();
         authUser.setId(result.user().getId());
         authUser.setUsername(result.user().getUsername());

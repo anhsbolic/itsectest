@@ -1,10 +1,15 @@
 package dev.harscode.itsectest.application.auth.login;
 
+import dev.harscode.itsectest.application.auth.mfa.MfaOtpService;
 import dev.harscode.itsectest.domain.audit.AuditLog;
 import dev.harscode.itsectest.domain.auth.UserSession;
 import dev.harscode.itsectest.domain.user.User;
 import dev.harscode.itsectest.domain.user.UserProfile;
-import dev.harscode.itsectest.ports.*;
+import dev.harscode.itsectest.ports.repository.AuditLogRepository;
+import dev.harscode.itsectest.ports.repository.UserProfileRepository;
+import dev.harscode.itsectest.ports.repository.UserRepository;
+import dev.harscode.itsectest.ports.repository.UserSessionRepository;
+import dev.harscode.itsectest.ports.service.LoginAttemptService;
 import dev.harscode.itsectest.security.jwt.JwtTokenService;
 import dev.harscode.itsectest.security.token.TokenHashService;
 import dev.harscode.itsectest.web.exception.UnauthorizedException;
@@ -28,6 +33,8 @@ public class LoginUserService implements LoginUserUsecase {
     private final TokenHashService tokenHashService;
     private final LoginAttemptService loginAttemptService;
     private final AuditLogRepository auditLogRepository;
+    private final MfaOtpService mfaOtpService;
+
 
     public LoginUserService(
             UserRepository userRepository,
@@ -37,7 +44,8 @@ public class LoginUserService implements LoginUserUsecase {
             JwtTokenService jwtTokenService,
             TokenHashService tokenHashService,
             LoginAttemptService loginAttemptService,
-            AuditLogRepository auditLogRepository
+            AuditLogRepository auditLogRepository,
+            MfaOtpService mfaOtpService
     ) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
@@ -47,6 +55,7 @@ public class LoginUserService implements LoginUserUsecase {
         this.tokenHashService = tokenHashService;
         this.loginAttemptService = loginAttemptService;
         this.auditLogRepository = auditLogRepository;
+        this.mfaOtpService = mfaOtpService;
     }
 
     @Override
@@ -136,6 +145,13 @@ public class LoginUserService implements LoginUserUsecase {
         // Get Profile
         UserProfile profile = userProfileRepository.findByUserId(user.getId()).orElse(null);
 
+        // When MFA Enabled
+        if (user.isMfaEnabled()) {
+            String mfaSessionId = mfaOtpService.startMfaForLogin(user, userAgent, ipAddress);
+            return LoginUserResult.mfaRequired(mfaSessionId);
+        }
+
+        // When MFA disabled
         // Generate a refresh token
         String refreshToken = tokenHashService.generateRefreshToken();
 
@@ -177,7 +193,7 @@ public class LoginUserService implements LoginUserUsecase {
         ));
 
         // Return
-        return new LoginUserResult(user, profile, accessToken, refreshToken);
+        return LoginUserResult.success(user, profile, accessToken, refreshToken);
     }
 
     private AuditLog buildAuditLog(

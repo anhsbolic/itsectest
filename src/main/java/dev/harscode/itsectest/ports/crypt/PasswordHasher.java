@@ -1,4 +1,4 @@
-package dev.harscode.itsectest.ports;
+package dev.harscode.itsectest.ports.crypt;
 
 public interface PasswordHasher {
 

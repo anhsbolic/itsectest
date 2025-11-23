@@ -1,7 +1,7 @@
 package dev.harscode.itsectest.adapters.security;
 
 import dev.harscode.itsectest.config.PiiCryptoProperties;
-import dev.harscode.itsectest.ports.PiiCrypto;
+import dev.harscode.itsectest.ports.crypt.PiiCrypto;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;

@@ -1,8 +1,8 @@
 package dev.harscode.itsectest.application.auth.emailverification;
 
 import dev.harscode.itsectest.domain.auth.UserToken;
-import dev.harscode.itsectest.ports.UserRepository;
-import dev.harscode.itsectest.ports.UserTokenRepository;
+import dev.harscode.itsectest.ports.repository.UserRepository;
+import dev.harscode.itsectest.ports.repository.UserTokenRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 

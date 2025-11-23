@@ -1,6 +1,6 @@
 package dev.harscode.itsectest.adapters.mail;
 
-import dev.harscode.itsectest.ports.MailSenderPort;
+import dev.harscode.itsectest.ports.mail.MailSenderPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

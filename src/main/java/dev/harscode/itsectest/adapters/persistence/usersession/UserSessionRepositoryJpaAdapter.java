@@ -1,8 +1,8 @@
 package dev.harscode.itsectest.adapters.persistence.usersession;
 
 import dev.harscode.itsectest.domain.auth.UserSession;
-import dev.harscode.itsectest.ports.PiiCrypto;
-import dev.harscode.itsectest.ports.UserSessionRepository;
+import dev.harscode.itsectest.ports.crypt.PiiCrypto;
+import dev.harscode.itsectest.ports.repository.UserSessionRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;

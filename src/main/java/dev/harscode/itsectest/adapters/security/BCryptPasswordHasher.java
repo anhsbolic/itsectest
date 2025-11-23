@@ -1,6 +1,6 @@
 package dev.harscode.itsectest.adapters.security;
 
-import dev.harscode.itsectest.ports.PasswordHasher;
+import dev.harscode.itsectest.ports.crypt.PasswordHasher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
 package dev.harscode.itsectest.adapters.persistence.usertoken;
 
 import dev.harscode.itsectest.domain.auth.UserToken;
-import dev.harscode.itsectest.ports.UserTokenRepository;
+import dev.harscode.itsectest.ports.repository.UserTokenRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;

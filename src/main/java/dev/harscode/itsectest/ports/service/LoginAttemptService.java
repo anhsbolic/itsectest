@@ -1,4 +1,4 @@
-package dev.harscode.itsectest.ports;
+package dev.harscode.itsectest.ports.service;
 
 public interface LoginAttemptService {
 

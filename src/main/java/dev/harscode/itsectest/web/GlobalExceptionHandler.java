@@ -95,4 +95,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("error", "INTERNAL_ERROR", "Unexpected error", null));
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuth(AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("error", ex.getCode(), ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(TooManyOtpRequestsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyOtpRequests(TooManyOtpRequestsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ErrorResponse("error", "MFA_TOO_MANY_REQUESTS", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(TooManyOtpAttemptsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyOtpAttempts(TooManyOtpAttemptsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ErrorResponse("error", "MFA_TOO_MANY_ATTEMPTS", ex.getMessage(), null));
+    }
 }

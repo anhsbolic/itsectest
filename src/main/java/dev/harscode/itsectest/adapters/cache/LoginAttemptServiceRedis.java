@@ -1,7 +1,7 @@
 package dev.harscode.itsectest.adapters.cache;
 
 import dev.harscode.itsectest.config.LoginAttemptProperties;
-import dev.harscode.itsectest.ports.LoginAttemptService;
+import dev.harscode.itsectest.ports.service.LoginAttemptService;
 import dev.harscode.itsectest.web.exception.LoginLockedException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;

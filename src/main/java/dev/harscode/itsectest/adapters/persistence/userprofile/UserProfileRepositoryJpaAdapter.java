@@ -3,8 +3,8 @@ package dev.harscode.itsectest.adapters.persistence.userprofile;
 import dev.harscode.itsectest.adapters.persistence.user.UserEntity;
 import dev.harscode.itsectest.adapters.persistence.user.UserJpaRepository;
 import dev.harscode.itsectest.domain.user.UserProfile;
-import dev.harscode.itsectest.ports.PiiCrypto;
-import dev.harscode.itsectest.ports.UserProfileRepository;
+import dev.harscode.itsectest.ports.crypt.PiiCrypto;
+import dev.harscode.itsectest.ports.repository.UserProfileRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;

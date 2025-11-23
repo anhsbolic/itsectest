@@ -1,4 +1,4 @@
-package dev.harscode.itsectest.ports;
+package dev.harscode.itsectest.ports.repository;
 
 import dev.harscode.itsectest.domain.auth.UserSession;
 

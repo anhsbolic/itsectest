@@ -1,8 +1,8 @@
 package dev.harscode.itsectest.adapters.persistence.auditlog;
 
 import dev.harscode.itsectest.domain.audit.AuditLog;
-import dev.harscode.itsectest.ports.AuditLogRepository;
-import dev.harscode.itsectest.ports.PiiCrypto;
+import dev.harscode.itsectest.ports.repository.AuditLogRepository;
+import dev.harscode.itsectest.ports.crypt.PiiCrypto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

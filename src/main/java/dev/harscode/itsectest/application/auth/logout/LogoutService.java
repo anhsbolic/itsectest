@@ -1,6 +1,6 @@
 package dev.harscode.itsectest.application.auth.logout;
 
-import dev.harscode.itsectest.ports.UserSessionRepository;
+import dev.harscode.itsectest.ports.repository.UserSessionRepository;
 import dev.harscode.itsectest.web.exception.UnauthorizedException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
