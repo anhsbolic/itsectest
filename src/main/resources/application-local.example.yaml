@@ -32,6 +32,13 @@ spring:
       host: localhost
       port: 6379
 
+  mail:
+    host: your_mail_host
+    port: 2525
+    username: your_mail_user
+    password: your_mail_password
+    default-encoding: UTF-8
+
 #logging:
 #  level:
 #    root: DEBUG
@@ -43,8 +50,8 @@ server:
 security:
   jwt:
     secret: your-secret
-    access-token-ttl-minutes: your-ttl-access
-    refresh-token-ttl-days: your-ttl-refresh
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-days: 7
 
   pii:
     key: your-pii-key
