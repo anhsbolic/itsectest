@@ -4,8 +4,10 @@ import dev.harscode.itsectest.web.dto.ErrorResponse;
 import dev.harscode.itsectest.web.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,14 +18,26 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicate(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ErrorResponse("error", "UNPROCESSABLE_ENTITY", "Integrity Violation or Duplicate", null));
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthDenied(AuthorizationDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("error", "FORBIDDEN", ex.getMessage(), null));
+    }
+
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyRequests(BadRequestException ex) {
+    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("error", "BAD_REQUEST", ex.getMessage(), null));
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyRequests(ForbiddenException ex) {
+    public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse("error", "FORBIDDEN", ex.getMessage(), null));
     }
@@ -54,7 +68,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyRequests(NotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse("error", "NOT_FOUND", ex.getMessage(), null));
     }
@@ -66,13 +80,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyRequests(UnauthorizedException ex) {
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse("error", "UNAUTHORIZED", ex.getMessage(), null));
     }
 
     @ExceptionHandler(UnprocessableEntityException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyRequests(UnprocessableEntityException ex) {
+    public ResponseEntity<ErrorResponse> handleUnprocessableEntity(UnprocessableEntityException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(new ErrorResponse("error", "UNPROCESSABLE_ENTITY", ex.getMessage(), null));
     }

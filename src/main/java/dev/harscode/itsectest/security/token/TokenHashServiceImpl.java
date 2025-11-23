@@ -11,6 +11,10 @@ public class TokenHashServiceImpl implements TokenHashService {
 
     @Override
     public String hash(String token) {
+        if (token == null) {
+            return null;
+        }
+
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));

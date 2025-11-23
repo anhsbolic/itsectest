@@ -151,7 +151,8 @@ public class ArticleController {
                 id,
                 authorId,
                 body.title(),
-                body.content()
+                body.content(),
+                body.status()
         );
 
         ArticleResult result = articleUsecase.update(cmd);

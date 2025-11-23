@@ -3,21 +3,22 @@ package dev.harscode.itsectest.adapters.persistence.user;
 import dev.harscode.itsectest.domain.user.User;
 import dev.harscode.itsectest.ports.crypt.PiiCrypto;
 import dev.harscode.itsectest.ports.repository.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
 public class UserRepositoryJpaAdapter implements UserRepository {
 
-    private final UserJpaRepository jpaRepository;
+    private final UserJpaRepository jpa;
     private final PiiCrypto piiCrypto;
 
-    public UserRepositoryJpaAdapter(UserJpaRepository jpaRepository,
-                                    PiiCrypto piiCrypto
-    ) {
-        this.jpaRepository = jpaRepository;
+    public UserRepositoryJpaAdapter(UserJpaRepository jpa, PiiCrypto piiCrypto) {
+        this.jpa = jpa;
         this.piiCrypto = piiCrypto;
     }
 
@@ -25,26 +26,26 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     public boolean existsByUsername(String username) {
         String normalized = username.toLowerCase();
         String hash = piiCrypto.hash(normalized);
-        return jpaRepository.existsByUsernameHash(hash);
+        return jpa.existsByUsernameHash(hash);
     }
 
     @Override
     public boolean existsByEmail(String email) {
         String normalized = email.toLowerCase();
         String hash = piiCrypto.hash(normalized);
-        return jpaRepository.existsByEmailHash(hash);
+        return jpa.existsByEmailHash(hash);
     }
 
     @Override
     public User save(User user) {
         UserEntity entity = toEntity(user);
-        UserEntity saved = jpaRepository.save(entity);
+        UserEntity saved = jpa.save(entity);
         return toDomain(saved);
     }
 
     @Override
     public Optional<User> findById(UUID id) {
-        return jpaRepository.findById(id).map(this::toDomain);
+        return jpa.findById(id).map(this::toDomain);
     }
 
     @Override
@@ -52,7 +53,7 @@ public class UserRepositoryJpaAdapter implements UserRepository {
         String norm = usernameOrEmail.trim().toLowerCase();
         String hash = piiCrypto.hash(norm);
 
-        return jpaRepository
+        return jpa
                 .findByUsernameHashOrEmailHash(hash, hash)
                 .map(this::toDomain);
     }
@@ -60,13 +61,40 @@ public class UserRepositoryJpaAdapter implements UserRepository {
 
     @Override
     public void markEmailVerifiedAndActivate(UUID userId) {
-        jpaRepository.findById(userId).ifPresent(entity -> {
+        jpa.findById(userId).ifPresent(entity -> {
             entity.setEmailVerified(true);
             if ("inactive".equalsIgnoreCase(entity.getStatus())) {
                 entity.setStatus("active");
             }
-            jpaRepository.save(entity);
+            jpa.save(entity);
         });
+    }
+
+    @Override
+    public User create(User user) {
+        UserEntity e = toEntity(user);
+        e.setCreatedAt(Instant.now());
+        e.setUpdatedAt(Instant.now());
+        return toDomain(jpa.save(e));
+    }
+
+    @Override
+    public User update(User user) {
+        UserEntity e = toEntity(user);
+        e.setUpdatedAt(Instant.now());
+        return toDomain(jpa.save(e));
+    }
+
+    @Override
+    public List<User> findPage(int page, int size) {
+        return jpa.findAllByDeletedAtIsNull(PageRequest.of(page, size))
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void softDelete(UUID id) {
+        jpa.softDelete(id, Instant.now());
     }
 
     private UserEntity toEntity(User user) {

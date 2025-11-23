@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateArticleRequest(
         @NotBlank @Size(max = 255) String title,
-        @NotBlank String content
+        @NotBlank String content,
+        @NotBlank String status
 ) {
 }
