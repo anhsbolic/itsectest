@@ -1,26 +1,34 @@
-# === BUILD STAGE ===
-FROM maven:3.9-eclipse-temurin-21 AS builder
+# ============================
+# 1. BUILD STAGE
+# ============================
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
-# Copy pom dulu untuk cache dependency
+# Copy pom first (dependency caching)
 COPY pom.xml .
 RUN mvn -q -e -DskipTests dependency:go-offline
 
-# Copy source code
+# Copy sources
 COPY src ./src
 
-# Build jar
+# Build with Spring Boot layered jar
 RUN mvn -q -e -DskipTests package
 
-# === RUNTIME STAGE ===
-FROM eclipse-temurin:21-jre-alpine
-
-ENV JAVA_OPTS=""
+# ============================
+# 2. RUNTIME STAGE
+# ============================
+FROM eclipse-temurin:21.0.4_7-jre-alpine
 
 WORKDIR /app
 
-# Copy jar dari builder
+# Install timezone (optional but recommended for logging)
+RUN apk add --no-cache tzdata
+
+ENV JAVA_OPTS=""
+ENV TZ=Asia/Jakarta
+
+# Copy ONLY the final jar
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080

@@ -1,21 +1,24 @@
 version: "3.9"
 
 services:
-#  app:
-#    build: .
-#    container_name: itsectest-app
-#    env_file:
-#      - .env
-#    ports:
-#      - "${APP_PORT:-8080}:8080"
-#    depends_on:
-#      - db
-#      - redis
-#    networks:
-#      - itsectest-net
+  app:
+    build: .
+    container_name: itsectest-app
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - itsectest-net
 
   db:
-    image: postgres:16-alpine
+    image: postgres:16.2-alpine
     container_name: itsectest-db
     environment:
       POSTGRES_DB: ${DB_NAME:-itsectest_library}
@@ -23,26 +26,34 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-itsectest_password}
     ports:
       - "5433:5432"
-    networks:
-      - itsectest-net
     volumes:
       - itsectest_pgdata:/var/lib/postgresql/data
+    networks:
+      - itsectest-net
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-itsectest_user}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
     container_name: itsectest-redis
     ports:
       - "6379:6379"
     networks:
       - itsectest-net
+    restart: unless-stopped
 
-#  mailhog:
-#    image: mailhog/mailhog
-#    container_name: itsectest-mailhog
-#    ports:
-#      - "8025:8025"
-#    networks:
-#      - itsectest-net
+  mailhog:
+    image: mailhog/mailhog
+    container_name: itsectest-mailhog
+    ports:
+      - "8025:8025"
+    networks:
+      - itsectest-net
+    restart: unless-stopped
 
 networks:
   itsectest-net:
