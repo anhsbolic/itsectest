@@ -1,8 +1,7 @@
 package dev.harscode.itsectest.web;
 
 import dev.harscode.itsectest.web.dto.ErrorResponse;
-import dev.harscode.itsectest.web.exception.TooManyRequestsException;
-import dev.harscode.itsectest.web.exception.UnsupportedMediaTypeException;
+import dev.harscode.itsectest.web.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,10 +16,40 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("error", "BAD_REQUEST", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("error", "FORBIDDEN", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("error", "NOT_FOUND", ex.getMessage(), null));
+    }
+
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(new ErrorResponse("error", "RATE_LIMIT_EXCEEDED", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse("error", "UNAUTHORIZED", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(UnprocessableEntityException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRequests(UnprocessableEntityException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ErrorResponse("error", "UNPROCESSABLE_ENTITY", ex.getMessage(), null));
     }
 
     @ExceptionHandler(UnsupportedMediaTypeException.class)

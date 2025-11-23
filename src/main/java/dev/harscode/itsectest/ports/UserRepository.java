@@ -16,4 +16,6 @@ public interface UserRepository {
     Optional<User> findById(UUID id);
 
     void markEmailVerifiedAndActivate(UUID userId);
+
+    Optional<User> findByUsernameOrEmail(String usernameOrEmail);
 }

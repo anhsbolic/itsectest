@@ -2,7 +2,11 @@ package dev.harscode.itsectest.ports;
 
 import dev.harscode.itsectest.domain.user.UserProfile;
 
-public interface UserProfileRepository {
+import java.util.Optional;
+import java.util.UUID;
 
-    UserProfile save(UserProfile profile);
+public interface UserProfileRepository {
+    Optional<UserProfile> findByUserId(UUID userId);
+
+    void save(UserProfile profile);
 }

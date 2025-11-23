@@ -2,8 +2,6 @@ package dev.harscode.itsectest.adapters.persistence.user;
 
 import dev.harscode.itsectest.domain.auth.UserToken;
 import dev.harscode.itsectest.ports.UserTokenRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -34,9 +32,6 @@ public class UserTokenRepositoryJpaAdapter implements UserTokenRepository {
 
     @Override
     public Optional<UserToken> findValidToken(String tokenHash, String tokenType) {
-        Logger log = LoggerFactory.getLogger(getClass());
-        log.info("Finding valid token {} of type {} at {}", tokenHash, tokenType, Instant.now());
-
         return jpa.findValidToken(tokenHash, tokenType, Instant.now()).map(this::toDomain);
     }
 

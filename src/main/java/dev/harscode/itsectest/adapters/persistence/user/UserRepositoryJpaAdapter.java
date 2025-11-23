@@ -15,7 +15,8 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     private final PiiCrypto piiCrypto;
 
     public UserRepositoryJpaAdapter(UserJpaRepository jpaRepository,
-                                    PiiCrypto piiCrypto) {
+                                    PiiCrypto piiCrypto
+    ) {
         this.jpaRepository = jpaRepository;
         this.piiCrypto = piiCrypto;
     }
@@ -45,6 +46,17 @@ public class UserRepositoryJpaAdapter implements UserRepository {
     public Optional<User> findById(UUID id) {
         return jpaRepository.findById(id).map(this::toDomain);
     }
+
+    @Override
+    public Optional<User> findByUsernameOrEmail(String usernameOrEmail) {
+        String norm = usernameOrEmail.trim().toLowerCase();
+        String hash = piiCrypto.hash(norm);
+
+        return jpaRepository
+                .findByUsernameHashOrEmailHash(hash, hash)
+                .map(this::toDomain);
+    }
+
 
     @Override
     public void markEmailVerifiedAndActivate(UUID userId) {

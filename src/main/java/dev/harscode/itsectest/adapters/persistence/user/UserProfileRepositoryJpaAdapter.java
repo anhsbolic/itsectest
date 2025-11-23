@@ -6,12 +6,14 @@ import dev.harscode.itsectest.ports.UserProfileRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class UserProfileRepositoryJpaAdapter implements UserProfileRepository {
 
     private final UserProfileJpaRepository jpaRepository;
-    private final UserJpaRepository userJpaRepository;   // tambahkan
+    private final UserJpaRepository userJpaRepository;
 
     private final PiiCrypto piiCrypto;
 
@@ -26,7 +28,12 @@ public class UserProfileRepositoryJpaAdapter implements UserProfileRepository {
     }
 
     @Override
-    public UserProfile save(UserProfile profile) {
+    public Optional<UserProfile> findByUserId(UUID userId) {
+        return jpaRepository.findById(userId).map(this::toDomain);
+    }
+
+    @Override
+    public void save(UserProfile profile) {
         UserEntity userEntity = userJpaRepository.getReferenceById(profile.getUserId());
 
         UserProfileEntity entity = new UserProfileEntity();
@@ -47,6 +54,18 @@ public class UserProfileRepositoryJpaAdapter implements UserProfileRepository {
 
         jpaRepository.save(entity);
 
-        return profile;
+    }
+
+    private UserProfile toDomain(UserProfileEntity e) {
+        UserProfile p = new UserProfile();
+        p.setUserId(e.getUserId());
+        p.setFullName(piiCrypto.decrypt(e.getFullNameEnc()));
+        if (e.getPhoneEnc() != null) {
+            p.setPhone(piiCrypto.decrypt(e.getPhoneEnc()));
+        }
+        p.setAvatarUrl(e.getAvatarUrl());
+        p.setCreatedAt(e.getCreatedAt());
+        p.setUpdatedAt(e.getUpdatedAt());
+        return p;
     }
 }

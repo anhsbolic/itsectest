@@ -5,8 +5,9 @@ import dev.harscode.itsectest.domain.auth.UserToken;
 import dev.harscode.itsectest.domain.user.User;
 import dev.harscode.itsectest.domain.user.UserProfile;
 import dev.harscode.itsectest.ports.*;
-import dev.harscode.itsectest.security.token.TokenHashService;
+import dev.harscode.itsectest.security.token.TokenHashServiceImpl;
 import dev.harscode.itsectest.security.token.VerificationTokenGenerator;
+import dev.harscode.itsectest.web.exception.UnprocessableEntityException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,7 @@ public class RegisterUserService implements RegisterUserUsecase {
     private final PasswordHasher passwordHasher;
     private final UserTokenRepository userTokenRepository;
     private final VerificationTokenGenerator tokenGenerator;
-    private final TokenHashService tokenHashService;
+    private final TokenHashServiceImpl tokenHashService;
     private final MailSenderPort mailSender;
     private final AuthProperties authProperties;
 
@@ -30,7 +31,7 @@ public class RegisterUserService implements RegisterUserUsecase {
                                PasswordHasher passwordHasher,
                                UserTokenRepository userTokenRepository,
                                VerificationTokenGenerator tokenGenerator,
-                               TokenHashService tokenHashService,
+                               TokenHashServiceImpl tokenHashService,
                                MailSenderPort mailSender,
                                AuthProperties authProperties) {
         this.userRepository = userRepository;
@@ -50,10 +51,10 @@ public class RegisterUserService implements RegisterUserUsecase {
         String email = cmd.email().trim().toLowerCase();
 
         if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username already taken");
+            throw new UnprocessableEntityException("Username already taken");
         }
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new UnprocessableEntityException("Email already registered");
         }
 
         // Create user
