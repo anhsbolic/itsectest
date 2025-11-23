@@ -12,9 +12,9 @@ public interface ArticleRepository {
 
     Article save(Article article);
 
-    Optional<Article> findById(UUID id);
+    Optional<Article> findWithFilters(UUID id, UUID authorId, String status);
 
-    Page<Article> findAll(String search, UUID authorId, Pageable pageable);
+    Page<Article> findAll(String search, UUID authorId, String status, Pageable pageable);
 
     void softDelete(UUID id);
 }

@@ -5,6 +5,10 @@ import dev.harscode.itsectest.adapters.web.article.dto.ArticleResponse;
 import dev.harscode.itsectest.adapters.web.article.dto.CreateArticleRequest;
 import dev.harscode.itsectest.adapters.web.article.dto.UpdateArticleRequest;
 import dev.harscode.itsectest.application.article.*;
+import dev.harscode.itsectest.domain.user.AuthUser;
+import dev.harscode.itsectest.security.permissions.article.ArticleAction;
+import dev.harscode.itsectest.security.permissions.article.ArticlePermission;
+import dev.harscode.itsectest.security.permissions.article.ArticleScope;
 import dev.harscode.itsectest.web.dto.ApiResponse;
 import dev.harscode.itsectest.web.exception.UnauthorizedException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -13,8 +17,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -25,9 +31,11 @@ import java.util.stream.Collectors;
 public class ArticleController {
 
     private final ArticleUsecase articleUsecase;
+    private final ArticlePermission permission;
 
-    public ArticleController(ArticleUsecase articleUsecase) {
+    public ArticleController(ArticleUsecase articleUsecase, ArticlePermission permission) {
         this.articleUsecase = articleUsecase;
+        this.permission = permission;
     }
 
     private UUID getCurrentUserId(HttpServletRequest request) {
@@ -52,11 +60,13 @@ public class ArticleController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ArticleResponse>> create(
+            @AuthenticationPrincipal AuthUser user,
             @Valid @RequestBody CreateArticleRequest body,
             HttpServletRequest request
     ) {
-        UUID userId = getCurrentUserId(request);
+        permission.resolveScope(user, ArticleAction.CREATE);
 
+        UUID userId = getCurrentUserId(request);
         CreateArticleCommand cmd = new CreateArticleCommand(
                 userId,
                 body.title(),
@@ -71,19 +81,44 @@ public class ArticleController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ArticleResponse>> getById(@PathVariable("id") UUID id) {
-        ArticleResult result = articleUsecase.getById(id);
+    public ResponseEntity<ApiResponse<ArticleResponse>> getById(
+            @AuthenticationPrincipal AuthUser user,
+            @PathVariable("id") UUID id,
+            HttpServletRequest request
+    ) {
+        UUID userId = getCurrentUserId(request);
+
+        ArticleScope scope = permission.resolveScope(user, ArticleAction.GET);
+        UUID authorId = null;
+        String status = null;
+        switch (scope) {
+            case OWN_ONLY -> authorId = userId;
+            case PUBLIC_ONLY -> status = "published";
+        }
+
+        ArticleResult result = articleUsecase.getById(id, authorId, status);
         return ResponseEntity.ok(ApiResponse.ok("detail of article", toResponse(result)));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<ArticleListResponse>> list(
+            @AuthenticationPrincipal AuthUser user,
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "authorId", required = false) UUID authorId
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "authorId", required = false) UUID authorId,
+            HttpServletRequest request
     ) {
-        ListArticlesQuery query = new ListArticlesQuery(page, size, search, authorId);
+        UUID userId = getCurrentUserId(request);
+
+        ArticleScope scope = permission.resolveScope(user, ArticleAction.LIST);
+        switch (scope) {
+            case OWN_ONLY -> authorId = userId;
+            case PUBLIC_ONLY -> status = "published";
+        }
+
+        ListArticlesQuery query = new ListArticlesQuery(page, size, search, status, authorId);
         PagedArticleResult result = articleUsecase.list(query);
 
         ArticleListResponse response = new ArticleListResponse(
@@ -99,17 +134,22 @@ public class ArticleController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ArticleResponse>> update(
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable("id") UUID id,
             @Valid @RequestBody UpdateArticleRequest body,
             HttpServletRequest request
     ) {
         UUID userId = getCurrentUserId(request);
-        String role = getCurrentUserRole(request);
+
+        ArticleScope scope = permission.resolveScope(user, ArticleAction.UPDATE);
+        UUID authorId = null;
+        if (Objects.requireNonNull(scope) == ArticleScope.OWN_ONLY) {
+            authorId = userId;
+        }
 
         UpdateArticleCommand cmd = new UpdateArticleCommand(
                 id,
-                userId,
-                role,
+                authorId,
                 body.title(),
                 body.content()
         );
@@ -120,13 +160,18 @@ public class ArticleController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
+            @AuthenticationPrincipal AuthUser user,
             @PathVariable("id") UUID id,
             HttpServletRequest request
     ) {
         UUID userId = getCurrentUserId(request);
-        String role = getCurrentUserRole(request);
 
-        DeleteArticleCommand cmd = new DeleteArticleCommand(id, userId, role);
+        ArticleScope scope = permission.resolveScope(user, ArticleAction.DELETE);
+        UUID authorId = null;
+        if (Objects.requireNonNull(scope) == ArticleScope.OWN_ONLY) {
+            authorId = userId;
+        }
+        DeleteArticleCommand cmd = new DeleteArticleCommand(id, authorId);
         articleUsecase.delete(cmd);
 
         return ResponseEntity.ok(ApiResponse.ok("article deleted", null));

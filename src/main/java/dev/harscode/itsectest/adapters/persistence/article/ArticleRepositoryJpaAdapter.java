@@ -27,15 +27,17 @@ public class ArticleRepositoryJpaAdapter implements ArticleRepository {
     }
 
     @Override
-    public Optional<Article> findById(UUID id) {
-        return jpa.findById(id)
-                .filter(e -> e.getDeletedAt() == null)
-                .map(this::toDomain);
+    public Optional<Article> findWithFilters(UUID id, UUID authorId, String status) {
+        Optional<ArticleEntity> entity = jpa.findOneWithFilters(id, authorId, status);
+        if (entity.isEmpty()) {
+            return Optional.empty();
+        }
+        return entity.map(this::toDomain);
     }
 
     @Override
-    public Page<Article> findAll(String search, UUID authorId, Pageable pageable) {
-        Page<ArticleEntity> page = jpa.search(search, authorId, pageable);
+    public Page<Article> findAll(String search, UUID authorId, String status, Pageable pageable) {
+        Page<ArticleEntity> page = jpa.search(search, authorId, status, pageable);
         return page.map(this::toDomain);
     }
 

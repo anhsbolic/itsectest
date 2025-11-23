@@ -4,7 +4,6 @@ import java.util.UUID;
 
 public record DeleteArticleCommand(
         UUID articleId,
-        UUID currentUserId,
-        String currentUserRole
+        UUID authorId
 ) {
 }

@@ -4,9 +4,9 @@ import java.util.UUID;
 
 public record UpdateArticleCommand(
         UUID articleId,
-        UUID currentUserId,
-        String currentUserRole,
+        UUID authorId,
         String title,
-        String content
+        String content,
+        String status
 ) {
 }

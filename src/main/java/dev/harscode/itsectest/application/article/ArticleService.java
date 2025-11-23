@@ -2,7 +2,6 @@ package dev.harscode.itsectest.application.article;
 
 import dev.harscode.itsectest.domain.article.Article;
 import dev.harscode.itsectest.ports.repository.ArticleRepository;
-import dev.harscode.itsectest.web.exception.ForbiddenException;
 import dev.harscode.itsectest.web.exception.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,22 +34,13 @@ public class ArticleService implements ArticleUsecase {
 
     @Override
     public ArticleResult update(UpdateArticleCommand cmd) {
-        Article a = repo.findById(cmd.articleId()).orElseThrow(() ->
+        Article a = repo.findWithFilters(cmd.articleId(), cmd.authorId(), null).orElseThrow(() ->
                 new NotFoundException("Article not found")
         );
 
-        if (a.isDeleted()) {
-            throw new NotFoundException("Article not found");
-        }
-
-        boolean isAuthor = a.getAuthorId().equals(cmd.currentUserId());
-        boolean isSuperAdmin = "super_admin".equalsIgnoreCase(cmd.currentUserRole());
-        if (!isAuthor && !isSuperAdmin) {
-            throw new ForbiddenException("You are not allowed to modify this article");
-        }
-
         a.setTitle(cmd.title().trim());
         a.setContent(cmd.content().trim());
+        a.setStatus(cmd.status().trim());
         a.setUpdatedAt(Instant.now());
 
         Article saved = repo.save(a);
@@ -59,21 +49,15 @@ public class ArticleService implements ArticleUsecase {
 
     @Override
     public void delete(DeleteArticleCommand cmd) {
-        Article a = repo.findById(cmd.articleId())
-                .orElseThrow(() -> new NotFoundException("Article not found"));
-
-        boolean isAuthor = a.getAuthorId().equals(cmd.currentUserId());
-        boolean isSuperAdmin = "super_admin".equalsIgnoreCase(cmd.currentUserRole());
-        if (!isAuthor && !isSuperAdmin) {
-            throw new ForbiddenException("You are not allowed to delete this article");
-        }
-
-        repo.softDelete(cmd.articleId());
+        Article a = repo.findWithFilters(cmd.articleId(), cmd.authorId(), null).orElseThrow(() ->
+                new NotFoundException("Article not found")
+        );
+        repo.softDelete(a.getId());
     }
 
     @Override
-    public ArticleResult getById(UUID id) {
-        Article a = repo.findById(id).orElseThrow(() ->
+    public ArticleResult getById(UUID id, UUID authorId, String requiredStatus) {
+        Article a = repo.findWithFilters(id, authorId, requiredStatus).orElseThrow(() ->
                 new NotFoundException("Article not found")
         );
         return toResult(a);
@@ -88,6 +72,7 @@ public class ArticleService implements ArticleUsecase {
         Page<Article> pageResult = repo.findAll(
                 query.search() == null ? "" : query.search().trim(),
                 query.authorId(),
+                query.status() == null ? "" : query.status().trim(),
                 pageable
         );
 
@@ -105,6 +90,7 @@ public class ArticleService implements ArticleUsecase {
                 a.getId(),
                 a.getTitle(),
                 a.getContent(),
+                a.getStatus(),
                 a.getAuthorId(),
                 a.getCreatedAt(),
                 a.getUpdatedAt()

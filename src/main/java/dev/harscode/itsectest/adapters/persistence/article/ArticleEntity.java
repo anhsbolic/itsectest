@@ -23,6 +23,9 @@ public class ArticleEntity {
     @Column(nullable = false)
     private String content;
 
+    @Column()
+    private String status;
+
     @Column(name = "author_id", nullable = false)
     private UUID authorId;
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ArticleJpaRepository extends JpaRepository<ArticleEntity, UUID> {
@@ -14,6 +15,7 @@ public interface ArticleJpaRepository extends JpaRepository<ArticleEntity, UUID>
             SELECT a FROM ArticleEntity a
             WHERE a.deletedAt IS NULL
               AND (:authorId IS NULL OR a.authorId = :authorId)
+              AND (:status IS NULL OR a.status = :status)
               AND (
                     :search IS NULL
                     OR :search = ''
@@ -24,6 +26,16 @@ public interface ArticleJpaRepository extends JpaRepository<ArticleEntity, UUID>
     Page<ArticleEntity> search(
             @Param("search") String search,
             @Param("authorId") UUID authorId,
+            @Param("status") String status,
             Pageable pageable
     );
+
+    @Query("""
+                SELECT a FROM ArticleEntity a
+                WHERE a.id = :id
+                AND a.deletedAt IS NULL
+                AND (:authorId IS NULL OR a.authorId = :authorId)
+                AND (:status IS NULL OR a.status = :status)
+            """)
+    Optional<ArticleEntity> findOneWithFilters(UUID id, UUID authorId, String status);
 }

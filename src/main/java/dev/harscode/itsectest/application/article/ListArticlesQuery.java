@@ -6,6 +6,7 @@ public record ListArticlesQuery(
         int page,
         int size,
         String search,
+        String status,
         UUID authorId
 ) {
 }

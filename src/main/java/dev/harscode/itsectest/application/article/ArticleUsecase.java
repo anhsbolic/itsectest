@@ -3,7 +3,7 @@ package dev.harscode.itsectest.application.article;
 import java.util.UUID;
 
 public interface ArticleUsecase {
-    ArticleResult getById(UUID id);
+    ArticleResult getById(UUID id, UUID authorId, String requiredStatus);
 
     PagedArticleResult list(ListArticlesQuery query);
 

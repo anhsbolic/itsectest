@@ -7,6 +7,7 @@ public record ArticleResult(
         UUID id,
         String title,
         String content,
+        String status,
         UUID authorId,
         Instant createdAt,
         Instant updatedAt

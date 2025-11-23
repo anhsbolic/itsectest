@@ -10,6 +10,7 @@ public class Article {
     private UUID id;
     private String title;
     private String content;
+    private String status;
     private UUID authorId;
     private Instant createdAt;
     private Instant updatedAt;
