@@ -8,6 +8,10 @@ import dev.harscode.itsectest.application.auth.login.LoginUserUsecase;
 import dev.harscode.itsectest.application.auth.logout.LogoutUsecase;
 import dev.harscode.itsectest.application.auth.me.GetCurrentUserResult;
 import dev.harscode.itsectest.application.auth.me.GetCurrentUserUsecase;
+import dev.harscode.itsectest.application.auth.mfa.ResendMfaCommand;
+import dev.harscode.itsectest.application.auth.mfa.ResendMfaUsecase;
+import dev.harscode.itsectest.application.auth.mfa.VerifyMfaCommand;
+import dev.harscode.itsectest.application.auth.mfa.VerifyMfaUsecase;
 import dev.harscode.itsectest.application.auth.refreshtoken.RefreshTokenCommand;
 import dev.harscode.itsectest.application.auth.refreshtoken.RefreshTokenResult;
 import dev.harscode.itsectest.application.auth.refreshtoken.RefreshTokenUsecase;
@@ -40,6 +44,8 @@ public class AuthController {
     private final RefreshTokenUsecase refreshTokenUsecase;
     private final GetCurrentUserUsecase getCurrentUserUsecase;
     private final LogoutUsecase logoutUsecase;
+    private final VerifyMfaUsecase verifyMfaUsecase;
+    private final ResendMfaUsecase resendMfaUsecase;
 
     public AuthController(
             RegisterUserUsecase registerUserUsecase,
@@ -47,7 +53,9 @@ public class AuthController {
             LoginUserUsecase loginUserUsecase,
             RefreshTokenUsecase refreshTokenUsecase,
             GetCurrentUserUsecase getCurrentUserUsecase,
-            LogoutUsecase logoutUsecase
+            LogoutUsecase logoutUsecase,
+            VerifyMfaUsecase verifyMfaUsecase,
+            ResendMfaUsecase resendMfaUsecase
     ) {
         this.registerUserUsecase = registerUserUsecase;
         this.emailVerificationUsecase = emailVerificationUsecase;
@@ -55,6 +63,8 @@ public class AuthController {
         this.refreshTokenUsecase = refreshTokenUsecase;
         this.getCurrentUserUsecase = getCurrentUserUsecase;
         this.logoutUsecase = logoutUsecase;
+        this.verifyMfaUsecase = verifyMfaUsecase;
+        this.resendMfaUsecase = resendMfaUsecase;
     }
 
     @PostMapping("/register")
@@ -231,5 +241,68 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .body(ApiResponse.ok("Logged out", null));
+    }
+
+    @PostMapping("/mfa/verify")
+    public ResponseEntity<ApiResponse<LoginResponse>> verifyMfa(
+            @Valid @RequestBody VerifyMfaRequest body,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        String ua = (String) request.getAttribute("fingerprint.ua");
+        String ip = (String) request.getAttribute("fingerprint.ip");
+
+        VerifyMfaCommand cmd = new VerifyMfaCommand(
+                body.mfaSessionId(),
+                body.otp(),
+                ua,
+                ip
+        );
+
+        LoginUserResult result = verifyMfaUsecase.verify(cmd);
+
+        AuthUser authUser = new AuthUser();
+        authUser.setId(result.user().getId());
+        authUser.setUsername(result.user().getUsername());
+        authUser.setEmail(result.user().getEmail());
+        authUser.setFullName(result.profile() != null ? result.profile().getFullName() : null);
+        authUser.setRole(result.user().getRole());
+
+        LoginResponse resBody = new LoginResponse(result.accessToken(), authUser);
+
+        boolean isSecure = false; // TODO: set true for staging/production (HTTPS)
+        String sameSite = "Lax"; // TODO : set "Strict" for staging/production (HTTPS)
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", result.refreshTokenRaw())
+                .httpOnly(true)
+                .secure(isSecure)
+                .sameSite(sameSite)
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ApiResponse.ok("MFA verified, login success", resBody));
+    }
+
+    @PostMapping("/mfa/resend")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> resendMfa(
+            @Valid @RequestBody ResendMfaRequest body,
+            HttpServletRequest request
+    ) {
+        String ua = (String) request.getAttribute("fingerprint.ua");
+        String ip = (String) request.getAttribute("fingerprint.ip");
+
+        ResendMfaCommand cmd = new ResendMfaCommand(
+                body.mfaSessionId(),
+                ua,
+                ip
+        );
+
+        resendMfaUsecase.resend(cmd);
+
+        Map<String, Object> data = Map.of(
+                "mfaSessionId", body.mfaSessionId()
+        );
+        return ResponseEntity.ok(ApiResponse.ok("MFA OTP resent", data));
     }
 }

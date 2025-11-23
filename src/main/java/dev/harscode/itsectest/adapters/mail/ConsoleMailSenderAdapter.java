@@ -14,4 +14,9 @@ public class ConsoleMailSenderAdapter implements MailSenderPort {
     public void sendEmailVerification(String toEmail, String verificationLink) {
         log.info("[DEV MAIL] Sending email verification to {}: {}", toEmail, verificationLink);
     }
+
+    @Override
+    public void sendMfaOtp(String to, String otp) {
+        log.info("[DEV MAIL] Sending MFA OTP to {}: {}", to, otp);
+    }
 }

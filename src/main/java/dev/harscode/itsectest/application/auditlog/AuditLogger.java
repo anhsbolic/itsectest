@@ -40,4 +40,24 @@ public class AuditLogger {
         log.setDescription(description);
         repo.save(log);
     }
+
+    public void loginOtpSent(UUID userId, String ipEnc, String ipHash, String uaEnc, String uaHash) {
+        log(userId, "LOGIN_MFA_OTP_SENT", null, null, true, ipEnc, ipHash, uaEnc, uaHash, null);
+    }
+
+    public void loginOtpResend(UUID userId, String ipEnc, String ipHash, String uaEnc, String uaHash) {
+        log(userId, "LOGIN_MFA_OTP_RESEND", null, null, true, ipEnc, ipHash, uaEnc, uaHash, null);
+    }
+
+    public void loginOtpFailed(UUID userId, String ipEnc, String ipHash, String uaEnc, String uaHash, String reason) {
+        log(userId, "LOGIN_MFA_OTP_FAILED", null, null, false, ipEnc, ipHash, uaEnc, uaHash, reason);
+    }
+
+    public void loginOtpSuccess(UUID userId, String ipEnc, String ipHash, String uaEnc, String uaHash) {
+        log(userId, "LOGIN_MFA_OTP_SUCCESS", null, null, true, ipEnc, ipHash, uaEnc, uaHash, null);
+    }
+
+    public void loginAttempt(UUID userId, boolean success, String ipEnc, String ipHash, String uaEnc, String uaHash, String desc) {
+        log(userId, "LOGIN_ATTEMPT", null, null, success, ipEnc, ipHash, uaEnc, uaHash, desc);
+    }
 }
