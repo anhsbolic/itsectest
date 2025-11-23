@@ -9,6 +9,10 @@ public record ApiResponse<T>(
         return new ApiResponse<>(true, message, data);
     }
 
+    public static <T> ApiResponse<T> created(String message, T data) {
+        return new ApiResponse<>(true, message, data);
+    }
+
     public static <T> ApiResponse<T> fail(String message, T data) {
         return new ApiResponse<>(false, message, data);
     }
