@@ -48,9 +48,6 @@ class EmailVerificationServiceTest {
         return t;
     }
 
-    // -------------------------------------------------------------
-    // HAPPY PATH
-    // -------------------------------------------------------------
     @Test
     void verify_shouldMarkTokenUsed_andActivateUser_whenValid() {
         UserToken token = makeToken();
@@ -65,9 +62,6 @@ class EmailVerificationServiceTest {
         verify(userRepository).markEmailVerifiedAndActivate(userId);
     }
 
-    // -------------------------------------------------------------
-    // INVALID TOKEN
-    // -------------------------------------------------------------
     @Test
     void verify_shouldThrowException_whenTokenInvalid() {
         when(userTokenRepository.findValidToken("invalid", "email-verification"))

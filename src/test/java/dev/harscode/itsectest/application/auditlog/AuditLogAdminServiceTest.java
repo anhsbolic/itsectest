@@ -55,10 +55,6 @@ class AuditLogAdminServiceTest {
         return l;
     }
 
-    // -----------------------------------------------------------------------
-    // LIST
-    // -----------------------------------------------------------------------
-
     @Test
     void list_shouldReturnAll_whenFilterIsNull() {
         AuditLog l1 = makeLog(logId1, userId1, "LOGIN", true);
@@ -99,10 +95,6 @@ class AuditLogAdminServiceTest {
 
         verify(repo).findAll();
     }
-
-    // -----------------------------------------------------------------------
-    // GET BY ID
-    // -----------------------------------------------------------------------
 
     @Test
     void getById_shouldReturnResult_whenFound() {
