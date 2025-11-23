@@ -1,5 +1,6 @@
 package dev.harscode.itsectest.application.auth.login;
 
+import dev.harscode.itsectest.domain.audit.AuditLog;
 import dev.harscode.itsectest.domain.auth.UserSession;
 import dev.harscode.itsectest.domain.user.User;
 import dev.harscode.itsectest.domain.user.UserProfile;
@@ -26,6 +27,7 @@ public class LoginUserService implements LoginUserUsecase {
     private final JwtTokenService jwtTokenService;
     private final TokenHashService tokenHashService;
     private final LoginAttemptService loginAttemptService;
+    private final AuditLogRepository auditLogRepository;
 
     public LoginUserService(
             UserRepository userRepository,
@@ -34,7 +36,8 @@ public class LoginUserService implements LoginUserUsecase {
             PasswordEncoder passwordEncoder,
             JwtTokenService jwtTokenService,
             TokenHashService tokenHashService,
-            LoginAttemptService loginAttemptService
+            LoginAttemptService loginAttemptService,
+            AuditLogRepository auditLogRepository
     ) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
@@ -43,6 +46,7 @@ public class LoginUserService implements LoginUserUsecase {
         this.jwtTokenService = jwtTokenService;
         this.tokenHashService = tokenHashService;
         this.loginAttemptService = loginAttemptService;
+        this.auditLogRepository = auditLogRepository;
     }
 
     @Override
@@ -51,7 +55,23 @@ public class LoginUserService implements LoginUserUsecase {
         String usernameOrEmail = cmd.usernameOrEmail().trim().toLowerCase();
         String rawPassword = cmd.rawPassword();
         String userAgent = cmd.userAgent() == null ? "" : cmd.userAgent().trim();
+        String uaHash = tokenHashService.hash(userAgent);
         String ipAddress = cmd.ipAddress() == null ? "" : cmd.ipAddress().trim();
+        String ipHash = tokenHashService.hash(ipAddress);
+
+        // log login attempt
+        auditLogRepository.save(buildAuditLog(
+                "LOGIN_ATTEMPT",
+                "User attempted login",
+                false,
+                userAgent,
+                ipAddress,
+                uaHash,
+                ipHash,
+                null,
+                "USER",
+                null
+        ));
 
         // login attempts key
         String attemptKey = tokenHashService.hash(usernameOrEmail);
@@ -62,15 +82,54 @@ public class LoginUserService implements LoginUserUsecase {
         // Find the user by username or email
         Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail);
         if (userOpt.isEmpty()) {
+            loginAttemptService.recordFailure(attemptKey);
+            auditLogRepository.save(buildAuditLog(
+                    "LOGIN_FAILED",
+                    "Invalid credentials",
+                    false,
+                    userAgent,
+                    ipAddress,
+                    uaHash,
+                    ipHash,
+                    null,
+                    "USER",
+                    null
+            ));
+
             throw new UnauthorizedException("Invalid credentials");
         }
         User user = userOpt.get();
         if (!user.getStatus().equals("active") || !user.isEmailVerified()) {
+            auditLogRepository.save(buildAuditLog(
+                    "LOGIN_FAILED",
+                    "Invalid credentials",
+                    false,
+                    userAgent,
+                    ipAddress,
+                    uaHash,
+                    ipHash,
+                    null,
+                    "USER",
+                    null
+            ));
             throw new UnauthorizedException("User is not active or email not verified");
         }
 
         // Verify password
         if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            auditLogRepository.save(buildAuditLog(
+                    "LOGIN_FAILED",
+                    "Invalid credentials",
+                    false,
+                    userAgent,
+                    ipAddress,
+                    uaHash,
+                    ipHash,
+                    user.getId(),
+                    "USER",
+                    user.getId()
+            ));
+            loginAttemptService.recordFailure(attemptKey);
             throw new UnauthorizedException("Invalid credentials");
         }
 
@@ -103,7 +162,48 @@ public class LoginUserService implements LoginUserUsecase {
         // Reset login attempts
         loginAttemptService.reset(attemptKey);
 
+        // log success login
+        auditLogRepository.save(buildAuditLog(
+                "LOGIN_SUCCESS",
+                "Login successful",
+                true,
+                userAgent,
+                ipAddress,
+                uaHash,
+                ipHash,
+                user.getId(),
+                "USER",
+                user.getId()
+        ));
+
         // Return
         return new LoginUserResult(user, profile, accessToken, refreshToken);
+    }
+
+    private AuditLog buildAuditLog(
+            String activity,
+            String description,
+            boolean success,
+            String userAgent,
+            String ipAddress,
+            String uaHash,
+            String ipHash,
+            UUID userId,
+            String entityType,
+            UUID entityId
+    ) {
+        AuditLog log = new AuditLog();
+        log.setActivity(activity);
+        log.setDescription(description);
+        log.setSuccess(success);
+        log.setUserAgent(userAgent);
+        log.setUserAgentHash(uaHash);
+        log.setIpAddress(ipAddress);
+        log.setIpAddressHash(ipHash);
+        log.setUserId(userId);
+        log.setEntityType(entityType);
+        log.setEntityId(entityId);
+        log.setActivityTime(Instant.now());
+        return log;
     }
 }
