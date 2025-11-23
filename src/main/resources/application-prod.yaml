@@ -28,3 +28,8 @@ security:
   pii:
     key: ${ENCRYPTION_KEY}
     hash-salt: ${HASH_SALT}
+
+  login:
+    max-attempts: 5
+    window-seconds: 600
+    block-seconds: 1800

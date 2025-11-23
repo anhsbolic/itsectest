@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties({
         AuthProperties.class,
+        LoginAttemptProperties.class,
         JwtProperties.class,
         PiiCryptoProperties.class
 })

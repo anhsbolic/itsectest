@@ -28,6 +28,31 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("error", "FORBIDDEN", ex.getMessage(), null));
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "error",
+                "INVALID_CREDENTIALS",
+                ex.getMessage(),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(LoginLockedException.class)
+    public ResponseEntity<ErrorResponse> handleLoginLocked(LoginLockedException ex) {
+        ErrorResponse body = new ErrorResponse(
+                "error",
+                "LOGIN_LOCKED",
+                ex.getMessage(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(body);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTooManyRequests(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

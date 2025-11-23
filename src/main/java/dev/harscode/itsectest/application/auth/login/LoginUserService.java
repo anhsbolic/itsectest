@@ -25,6 +25,7 @@ public class LoginUserService implements LoginUserUsecase {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
     private final TokenHashService tokenHashService;
+    private final LoginAttemptService loginAttemptService;
 
     public LoginUserService(
             UserRepository userRepository,
@@ -32,7 +33,8 @@ public class LoginUserService implements LoginUserUsecase {
             UserSessionRepository userSessionRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenService jwtTokenService,
-            TokenHashService tokenHashService
+            TokenHashService tokenHashService,
+            LoginAttemptService loginAttemptService
     ) {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
@@ -40,6 +42,7 @@ public class LoginUserService implements LoginUserUsecase {
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenService = jwtTokenService;
         this.tokenHashService = tokenHashService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
@@ -49,6 +52,12 @@ public class LoginUserService implements LoginUserUsecase {
         String rawPassword = cmd.rawPassword();
         String userAgent = cmd.userAgent() == null ? "" : cmd.userAgent().trim();
         String ipAddress = cmd.ipAddress() == null ? "" : cmd.ipAddress().trim();
+
+        // login attempts key
+        String attemptKey = tokenHashService.hash(usernameOrEmail);
+
+        // make sure the user is not blocked
+        loginAttemptService.assertNotBlocked(attemptKey);
 
         // Find the user by username or email
         Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail);
@@ -90,6 +99,9 @@ public class LoginUserService implements LoginUserUsecase {
                 user.getRole(),
                 false
         );
+
+        // Reset login attempts
+        loginAttemptService.reset(attemptKey);
 
         // Return
         return new LoginUserResult(user, profile, accessToken, refreshToken);
