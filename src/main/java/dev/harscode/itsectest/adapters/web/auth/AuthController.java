@@ -4,7 +4,9 @@ import dev.harscode.itsectest.application.auth.*;
 import dev.harscode.itsectest.domain.user.AuthUser;
 import dev.harscode.itsectest.web.dto.ApiResponse;
 import dev.harscode.itsectest.web.exception.UnauthorizedException;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,17 +25,23 @@ public class AuthController {
     private final EmailVerificationUsecase emailVerificationUsecase;
     private final LoginUserUsecase loginUserUsecase;
     private final RefreshTokenUsecase refreshTokenUsecase;
+    private final GetCurrentUserUsecase getCurrentUserUsecase;
+    private final LogoutUsecase logoutUsecase;
 
     public AuthController(
             RegisterUserUsecase registerUserUsecase,
             EmailVerificationUsecase emailVerificationUsecase,
             LoginUserUsecase loginUserUsecase,
-            RefreshTokenUsecase refreshTokenUsecase
+            RefreshTokenUsecase refreshTokenUsecase,
+            GetCurrentUserUsecase getCurrentUserUsecase,
+            LogoutUsecase logoutUsecase
     ) {
         this.registerUserUsecase = registerUserUsecase;
         this.emailVerificationUsecase = emailVerificationUsecase;
         this.loginUserUsecase = loginUserUsecase;
         this.refreshTokenUsecase = refreshTokenUsecase;
+        this.getCurrentUserUsecase = getCurrentUserUsecase;
+        this.logoutUsecase = logoutUsecase;
     }
 
     @PostMapping("/register")
@@ -136,16 +145,69 @@ public class AuthController {
 
         RefreshTokenResponse body = new RefreshTokenResponse(result.accessToken(), authUser);
 
-        boolean isSecure = false;
+        boolean isSecure = false; // TODO: set true for staging/production (HTTPS)
+        String sameSite = "Lax"; // TODO : set "Strict" for staging/production (HTTPS)
         ResponseCookie cookie = ResponseCookie.from("refresh_token", result.newRefreshTokenRaw())
                 .httpOnly(true)
                 .secure(isSecure)
-                .sameSite("Strict")
+                .sameSite(sameSite)
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(ApiResponse.ok("Token refreshed", body));
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MeResponse>> me(HttpServletRequest request) {
+        String userId = (String) request.getAttribute("auth.userId");
+        if (userId == null) {
+            throw new UnauthorizedException("Missing authentication");
+        }
+
+        GetCurrentUserResult result = getCurrentUserUsecase.getCurrentUser(UUID.fromString(userId));
+
+        AuthUser authUser = new AuthUser();
+        authUser.setId(result.user().getId());
+        authUser.setUsername(result.user().getUsername());
+        authUser.setEmail(result.user().getEmail());
+        authUser.setFullName(result.profile() != null ? result.profile().getFullName() : null);
+        authUser.setRole(result.user().getRole());
+
+        MeResponse body = new MeResponse(authUser);
+
+        return ResponseEntity.ok(ApiResponse.ok("Current user", body));
+    }
+
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        String userId = (String) request.getAttribute("auth.userId");
+        String sessionId = (String) request.getAttribute("auth.sessionId");
+
+        if (userId == null || sessionId == null) {
+            throw new UnauthorizedException("Missing authentication");
+        }
+
+        // Revoke session
+        logoutUsecase.logout(UUID.fromString(userId), UUID.fromString(sessionId));
+
+        // Clear refresh_token cookie
+        boolean isSecure = false; // TODO: set true for staging/production (HTTPS)
+        String sameSite = "Lax"; // TODO : set "Strict" for staging/production (HTTPS)
+        ResponseCookie clearCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(isSecure)
+                .sameSite(sameSite)
+                .maxAge(0)
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+                .body(ApiResponse.ok("Logged out", null));
     }
 }

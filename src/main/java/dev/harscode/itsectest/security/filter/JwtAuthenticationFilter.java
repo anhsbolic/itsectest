@@ -1,12 +1,13 @@
 package dev.harscode.itsectest.security.filter;
 
 import dev.harscode.itsectest.security.jwt.JwtTokenService;
+import dev.harscode.itsectest.web.exception.UnauthorizedException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
-import org.springframework.http.HttpHeaders;
+import org.flywaydb.core.internal.util.StringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -25,23 +26,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
+            HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String header = request.getHeader("Authorization");
+        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        String token = header.substring(7);
 
-            var authResult = jwtTokenService.parseAndValidateAccessToken(token);
-            if (authResult != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        authResult.userId(), null, authResult.authorities());
-                authentication.setDetails(authResult);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+        try {
+            JwtTokenService.AccessTokenPayload payload = jwtTokenService.parseAndValidateAccessToken(token);
+
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(payload, null, null);
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
+            request.setAttribute("auth.userId", payload.userId());
+            request.setAttribute("auth.sessionId", payload.sessionId());
+            request.setAttribute("auth.role", payload.role());
+
+        } catch (Exception ex) {
+            throw new UnauthorizedException("Invalid or expired access token");
         }
 
         filterChain.doFilter(request, response);
