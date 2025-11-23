@@ -3,6 +3,7 @@ package dev.harscode.itsectest.adapters.web.auth;
 import dev.harscode.itsectest.application.auth.*;
 import dev.harscode.itsectest.domain.user.AuthUser;
 import dev.harscode.itsectest.web.dto.ApiResponse;
+import dev.harscode.itsectest.web.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -20,15 +21,18 @@ public class AuthController {
     private final RegisterUserUsecase registerUserUsecase;
     private final EmailVerificationUsecase emailVerificationUsecase;
     private final LoginUserUsecase loginUserUsecase;
+    private final RefreshTokenUsecase refreshTokenUsecase;
 
     public AuthController(
             RegisterUserUsecase registerUserUsecase,
             EmailVerificationUsecase emailVerificationUsecase,
-            LoginUserUsecase loginUserUsecase
+            LoginUserUsecase loginUserUsecase,
+            RefreshTokenUsecase refreshTokenUsecase
     ) {
         this.registerUserUsecase = registerUserUsecase;
         this.emailVerificationUsecase = emailVerificationUsecase;
         this.loginUserUsecase = loginUserUsecase;
+        this.refreshTokenUsecase = refreshTokenUsecase;
     }
 
     @PostMapping("/register")
@@ -105,5 +109,43 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(envelope);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<RefreshTokenResponse>> refresh(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletRequest request
+    ) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new UnauthorizedException("Refresh token cookie is missing");
+        }
+
+        String ua = (String) request.getAttribute("fingerprint.ua");
+        String ip = (String) request.getAttribute("fingerprint.ip");
+
+        RefreshTokenCommand cmd = new RefreshTokenCommand(refreshToken, ua, ip);
+        RefreshTokenResult result = refreshTokenUsecase.refresh(cmd);
+
+        // mapping user ke AuthUser
+        AuthUser authUser = new AuthUser();
+        authUser.setId(result.user().getId());
+        authUser.setUsername(result.user().getUsername());
+        authUser.setEmail(result.user().getEmail());
+        authUser.setFullName(result.profile() != null ? result.profile().getFullName() : null);
+        authUser.setRole(result.user().getRole());
+
+        RefreshTokenResponse body = new RefreshTokenResponse(result.accessToken(), authUser);
+
+        boolean isSecure = false;
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", result.newRefreshTokenRaw())
+                .httpOnly(true)
+                .secure(isSecure)
+                .sameSite("Strict")
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(ApiResponse.ok("Token refreshed", body));
     }
 }

@@ -5,6 +5,10 @@ import dev.harscode.itsectest.ports.PiiCrypto;
 import dev.harscode.itsectest.ports.UserSessionRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
 @Component
 public class UserSessionRepositoryJpaAdapter implements UserSessionRepository {
 
@@ -40,6 +44,47 @@ public class UserSessionRepositoryJpaAdapter implements UserSessionRepository {
 
         UserSessionEntity saved = jpa.save(e);
         return toDomain(saved);
+    }
+
+    @Override
+    public Optional<UserSession> findValidByRefreshTokenHash(String refreshTokenHash, Instant now) {
+        return jpa.findValidByRefreshTokenHash(refreshTokenHash, now).map(this::toDomain);
+    }
+
+    @Override
+    public void save(UserSession session) {
+        UserSessionEntity e = toEntity(session);
+        jpa.save(e);
+    }
+
+    @Override
+    public void revokeSession(UUID sessionId, Instant revokedAt) {
+        jpa.findAll().stream()
+                .filter(e -> e.getSessionId().equals(sessionId))
+                .findFirst()
+                .ifPresent(e -> {
+                    e.setRevokedAt(revokedAt);
+                    jpa.save(e);
+                });
+    }
+
+    private UserSessionEntity toEntity(UserSession s) {
+        UserSessionEntity e = new UserSessionEntity();
+        e.setId(s.getId());
+        e.setUserId(s.getUserId());
+        e.setSessionId(s.getSessionId());
+        e.setRefreshTokenHash(s.getRefreshTokenHash());
+        e.setUserAgentEnc(encryptionService.encrypt(s.getUserAgent() == null ? "" : s.getUserAgent()));
+        e.setUserAgentHash(s.getUserAgentHash());
+        e.setIpAddressEnc(encryptionService.encrypt(s.getIpAddress() == null ? "" : s.getIpAddress()));
+        e.setIpAddressHash(s.getIpAddressHash());
+        e.setCountryCode(s.getCountryCode());
+        e.setExpiresAt(s.getExpiresAt());
+        e.setRevokedAt(s.getRevokedAt());
+        e.setDeletedAt(s.getDeletedAt());
+        e.setCreatedAt(s.getCreatedAt());
+        e.setUpdatedAt(s.getUpdatedAt());
+        return e;
     }
 
     private UserSession toDomain(UserSessionEntity e) {
