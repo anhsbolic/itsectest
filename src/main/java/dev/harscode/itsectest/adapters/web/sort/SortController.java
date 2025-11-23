@@ -1,5 +1,7 @@
 package dev.harscode.itsectest.adapters.web.sort;
 
+import dev.harscode.itsectest.adapters.web.sort.dto.SortRequest;
+import dev.harscode.itsectest.adapters.web.sort.dto.SortResponse;
 import dev.harscode.itsectest.application.sort.SortNumbersUseCase;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

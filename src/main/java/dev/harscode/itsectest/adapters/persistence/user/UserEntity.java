@@ -1,5 +1,6 @@
 package dev.harscode.itsectest.adapters.persistence.user;
 
+import dev.harscode.itsectest.adapters.persistence.userprofile.UserProfileEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
