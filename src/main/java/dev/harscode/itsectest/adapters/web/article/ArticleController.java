@@ -137,6 +137,9 @@ public class ArticleController {
             @Valid @RequestBody UpdateArticleRequest body,
             HttpServletRequest request
     ) {
+        String userAgent = (String) request.getAttribute("fingerprint.ua");
+        String ip = (String) request.getAttribute("fingerprint.ip");
+
         UUID userId = getCurrentUserId(request);
         String userRole = getCurrentUserRole(request);
 
@@ -151,7 +154,10 @@ public class ArticleController {
                 authorId,
                 body.title(),
                 body.content(),
-                body.status()
+                body.status(),
+                userId,
+                userAgent,
+                ip
         );
 
         ArticleResult result = articleUsecase.update(cmd);

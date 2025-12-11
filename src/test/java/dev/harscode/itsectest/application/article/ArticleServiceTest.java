@@ -2,6 +2,8 @@ package dev.harscode.itsectest.application.article;
 
 import dev.harscode.itsectest.domain.article.Article;
 import dev.harscode.itsectest.ports.repository.ArticleRepository;
+import dev.harscode.itsectest.ports.repository.AuditLogRepository;
+import dev.harscode.itsectest.security.token.TokenHashService;
 import dev.harscode.itsectest.web.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,12 @@ class ArticleServiceTest {
 
     @Mock
     private ArticleRepository repo;
+
+    @Mock
+    private TokenHashService tokenHashService;
+
+    @Mock
+    private AuditLogRepository auditLogRepository;
 
     @InjectMocks
     private ArticleService service;
@@ -88,7 +96,10 @@ class ArticleServiceTest {
                 authorId,
                 "New Title",
                 "New Content",
-                "draft"
+                "draft",
+                authorId,
+                "userAgent",
+                "ipAddress"
         );
 
         when(repo.findWithFilters(articleId, authorId, null))
@@ -110,7 +121,14 @@ class ArticleServiceTest {
     @Test
     void update_shouldThrowNotFound_whenMissing() {
         UpdateArticleCommand cmd = new UpdateArticleCommand(
-                articleId, authorId, "A", "B", "draft"
+                articleId,
+                authorId,
+                "A",
+                "B",
+                "draft",
+                authorId,
+                "userAgent",
+                "ipAddress"
         );
 
         when(repo.findWithFilters(articleId, authorId, null))

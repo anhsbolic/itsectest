@@ -7,6 +7,9 @@ public record UpdateArticleCommand(
         UUID authorId,
         String title,
         String content,
-        String status
+        String status,
+        UUID userId,
+        String userAgent,
+        String ipAddress
 ) {
 }
