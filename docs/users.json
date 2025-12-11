@@ -1,0 +1,114 @@
+{
+  "success": true,
+  "message": "list of user",
+  "data": [
+    {
+      "id": "706d5157-147a-46b1-8b3b-2a08b8dbcae9",
+      "username": "dedi",
+      "email": "dedi@yopmail.com",
+      "fullName": "Dedi Mulyadi",
+      "role": "viewer",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": true,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-22T20:30:13.708744Z"
+    },
+    {
+      "id": "f52df12b-02bd-4f18-bca7-59ed157cd4b8",
+      "username": "anhsbolic",
+      "email": "anhsbolic@gmail.com",
+      "fullName": "Anhar Solehudin",
+      "role": "super_admin",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": true,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-22T19:10:07.174983Z"
+    },
+    {
+      "id": "90ea41e0-90e6-4732-8167-bbbe30e21e22",
+      "username": "editor1",
+      "email": "editor1@yopmail.com",
+      "fullName": "Editor 1",
+      "role": "editor",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": false,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T13:09:55.476697Z"
+    },
+    {
+      "id": "d55946b2-d402-431d-9911-dc10f9b998ba",
+      "username": "editor2",
+      "email": "editor2@yopmail.com",
+      "fullName": "Editor 2",
+      "role": "editor",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": false,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T13:11:00.425781Z"
+    },
+    {
+      "id": "2cb09c94-3382-4676-8312-80ab0c78795b",
+      "username": "contributor1",
+      "email": "contributor2@yopmail.com",
+      "fullName": "Contributor 2",
+      "role": "contributor",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": false,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T13:18:25.765675Z"
+    },
+    {
+      "id": "9a6c1cd6-37fa-4f6c-a486-64a48734d785",
+      "username": "contributor3",
+      "email": "contributor3@yopmail.com",
+      "fullName": "Contributor 3",
+      "role": "contributor",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": false,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T13:18:47.797898Z"
+    },
+    {
+      "id": "d440ce34-c0ce-483b-afe9-1b6e63bb1212",
+      "username": "viewer1",
+      "email": "viewer1@yopmail.com",
+      "fullName": "Viewer 3",
+      "role": "viewer",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": false,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T13:19:08.924164Z"
+    },
+    {
+      "id": "ac975d10-b57a-4b31-a844-5d7b2f898bf7",
+      "username": "viewer2",
+      "email": "viewer2@yopmail.com",
+      "fullName": "Viewer 2",
+      "role": "viewer",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": false,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T13:19:20.359266Z"
+    },
+    {
+      "id": "bb436126-eb30-4cd8-b65e-2c15161b60b9",
+      "username": "cucu",
+      "email": "cucu@yopmail.com",
+      "fullName": "Cucu Hermawan",
+      "role": "viewer",
+      "status": "active",
+      "emailVerified": true,
+      "mfaEnabled": true,
+      "lastLoginAt": null,
+      "createdAt": "2025-11-23T16:07:28.259653Z"
+    }
+  ]
+}

@@ -1,21 +1,21 @@
 version: "3.9"
 
 services:
-  app:
-    build: .
-    container_name: itsectest-app
-    env_file:
-      - .env
-    ports:
-      - "${APP_PORT:-8080}:8080"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - itsectest-net
+#  app:
+#    build: .
+#    container_name: itsectest-app
+#    env_file:
+#      - .env
+#    ports:
+#      - "${APP_PORT:-8080}:8080"
+#    depends_on:
+#      db:
+#        condition: service_healthy
+#      redis:
+#        condition: service_started
+#    restart: unless-stopped
+#    networks:
+#      - itsectest-net
 
   db:
     image: postgres:16.2-alpine
@@ -46,14 +46,14 @@ services:
       - itsectest-net
     restart: unless-stopped
 
-  mailhog:
-    image: mailhog/mailhog
-    container_name: itsectest-mailhog
-    ports:
-      - "8025:8025"
-    networks:
-      - itsectest-net
-    restart: unless-stopped
+#  mailhog:
+#    image: mailhog/mailhog
+#    container_name: itsectest-mailhog
+#    ports:
+#      - "8025:8025"
+#    networks:
+#      - itsectest-net
+#    restart: unless-stopped
 
 networks:
   itsectest-net:

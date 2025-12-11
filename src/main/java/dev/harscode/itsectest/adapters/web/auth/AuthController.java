@@ -144,6 +144,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(isSecure)
                 .sameSite(sameSite)
+                .path("/api/auth")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
 
@@ -183,6 +184,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(isSecure)
                 .sameSite(sameSite)
+                .path("/api/auth")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
 
@@ -236,6 +238,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(isSecure)
                 .sameSite(sameSite)
+                .path("/api/auth")
                 .maxAge(0)
                 .build();
         return ResponseEntity.ok()
@@ -276,6 +279,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(isSecure)
                 .sameSite(sameSite)
+                .path("/api/auth")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
 

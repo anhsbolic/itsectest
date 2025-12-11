@@ -50,8 +50,9 @@ public class RefreshTokenService implements RefreshTokenUsecase {
         String ip = cmd.ipAddress() == null ? "" : cmd.ipAddress().trim();
 
         // Find Session by refresh token
+        String hashedRaw = tokenHashService.hash(raw);
         UserSession session = userSessionRepository
-                .findValidByRefreshTokenHash(raw, Instant.now())
+                .findValidByRefreshTokenHash(hashedRaw, Instant.now())
                 .orElseThrow(() -> new UnauthorizedException("Invalid or expired session"));
 
         // Validate user agent and ip address
